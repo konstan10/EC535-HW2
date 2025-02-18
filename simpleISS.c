@@ -14,6 +14,7 @@ char instruction_arr[MAX_LINES][MAX_INSTR_LEN];
 int instruction_num[MAX_LINES];
 int instruction_offset;
 int last_line_num;
+int cached[MAX_MEMORY_SIZE] = {0};
 
 // Result trackers
 int instructions_executed = 0;
@@ -47,18 +48,22 @@ int getRegNum(char* reg) {
 
 void mov(int reg_num, int value) {
     registers[reg_num] = value;
+    clock_cycles += 1;
 }
 
 void addReg(int reg_num_n, int reg_num_m) {
     registers[reg_num_n] += registers[reg_num_m];
+    clock_cycles += 1;
 }
 
 void addVal(int reg_num_n, int value) {
     registers[reg_num_n] += value;
+    clock_cycles += 1;
 }
 
 int cmp(int reg_num_n, int reg_num_m) {
-    if (registers[reg_num_n] == registers[reg_num_m]){
+    clock_cycles += 1;
+    if (registers[reg_num_n] == registers[reg_num_m]) {
         return 1;
     }
     else {
@@ -67,11 +72,29 @@ int cmp(int reg_num_n, int reg_num_m) {
 }
 
 void ld(int reg_num_n, int reg_num_m) {
-    registers[reg_num_n] = memory[registers[reg_num_m]];
+    unsigned char memory_idx = registers[reg_num_m];
+    if (cached[memory_idx] == 0) {
+        cached[memory_idx] = 1;
+        clock_cycles += 45;
+    }
+    else {
+        clock_cycles += 2;
+        local_mem_hits++;
+    }
+    registers[reg_num_n] = memory[memory_idx];
 }
 
 void st(int reg_num_n, int reg_num_m) {
-    memory[registers[reg_num_n]] = registers[reg_num_m];
+    unsigned char memory_idx = registers[reg_num_n];
+    if (cached[memory_idx] == 0) {
+        cached[memory_idx] = 1;
+        clock_cycles += 45;
+    }
+    else {
+        clock_cycles += 2;
+        local_mem_hits++;
+    }
+    memory[memory_idx] = registers[reg_num_m];
 }
 
 void executeInstructions() {
@@ -80,7 +103,7 @@ void executeInstructions() {
      * line: Used as a counter/tracker for current line
      * conditional: Holds value from cmp (-1 for not in use, 0 for false, 1 for true) 
      */
-    char* delim = ", ";
+    char* delim = "\t, ";
     int line = 0;
     int conditional = -1;
 
@@ -167,7 +190,6 @@ void executeInstructions() {
             // Get register number m
             token = strtok(NULL, delim);
             int reg_num_m = getRegNum(token);
-
             conditional = cmp(reg_num_n, reg_num_m);
             printf("Conditional result: %d\n", conditional);
             line++;
@@ -185,12 +207,14 @@ void executeInstructions() {
                 line++;
             }
             conditional = -1;
+            clock_cycles += 1;
         }
         else if (strcmp(token, "JMP") == 0) {
             // Get line number
             token = strtok(NULL, delim);
             int line_to_jump = atoi(token);
             line = line_to_jump - instruction_offset;
+            clock_cycles += 1;
         }
         else {
             printf("Not implemented\n");
@@ -211,10 +235,10 @@ void printInstructions() {
 }
 
 void printResults() {
-    printf("Total number of executed instructions: %d", instructions_executed);
-    printf("Total number of clock cycles: %d", clock_cycles);
-    printf("Number of hits to local memory: %d", local_mem_hits);
-    printf("Total number of executed LD/ST instructions: %d", ld_st_executed);
+    printf("Total number of executed instructions: %d\n", instructions_executed);
+    printf("Total number of clock cycles: %d\n", clock_cycles);
+    printf("Number of hits to local memory: %d\n", local_mem_hits);
+    printf("Total number of executed LD/ST instructions: %d\n", ld_st_executed);
 }
 int main(int argc, char* argv[]) {
     FILE *assembly_code = fopen(argv[1], "r");
@@ -223,7 +247,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     readInstructions(assembly_code);
-    executeInstructions();
     // printInstructions();
+    executeInstructions();
+    printResults();
     fclose(assembly_code);
 }
