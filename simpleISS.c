@@ -99,7 +99,7 @@ void st(int reg_num_n, int reg_num_m) {
 
 void executeInstructions() {
     /**
-     * delim: Used for strtok
+     * delim: Used for strtok; delimit string by tabs, commas, and spaces
      * line: Used as a counter/tracker for current line
      * conditional: Holds value from cmp (-1 for not in use, 0 for false, 1 for true) 
      */
@@ -121,7 +121,7 @@ void executeInstructions() {
 
             // Execute
             mov(reg_num, value);
-            printf("Value %d moved into %d\n", registers[reg_num], reg_num);
+            // printf("Value %d moved into %d\n", registers[reg_num], reg_num);
             line++;
         }
     
@@ -140,7 +140,7 @@ void executeInstructions() {
                 int value = atoi(token);
                 addVal(reg_num_n, value);
             }
-            printf("Value of register %d after add: %d\n", reg_num_n, registers[reg_num_n]);
+            // printf("Value of register %d after add: %d\n", reg_num_n, registers[reg_num_n]);
             line++;
         }
         else if (strcmp(token, "LD") == 0) {
@@ -158,7 +158,7 @@ void executeInstructions() {
 
             // Execute
             ld(reg_num_n, reg_num_m);
-            printf("Value at register %d: %d\n", reg_num_n, registers[reg_num_n]);
+            // printf("Value at register %d: %d\n", reg_num_n, registers[reg_num_n]);
             line++;
             ld_st_executed++;
         }
@@ -177,7 +177,7 @@ void executeInstructions() {
 
             // Execute
             st(reg_num_n, reg_num_m);
-            printf("Value in memory: %d\n", memory[registers[reg_num_n]]);
+            // printf("Value in memory: %d\n", memory[registers[reg_num_n]]);
             line++;
             ld_st_executed++;
         }
@@ -191,7 +191,7 @@ void executeInstructions() {
             token = strtok(NULL, delim);
             int reg_num_m = getRegNum(token);
             conditional = cmp(reg_num_n, reg_num_m);
-            printf("Conditional result: %d\n", conditional);
+            // printf("Conditional result: %d\n", conditional);
             line++;
         }
         else if (strcmp(token, "JE") == 0) {
@@ -199,9 +199,9 @@ void executeInstructions() {
             if (conditional == 1){
                 token = strtok(NULL, delim);
                 int line_to_jump = atoi(token);
-                printf("Instruction offset: %d\n", instruction_offset);
+                // printf("Instruction offset: %d\n", instruction_offset);
                 line = line_to_jump - instruction_offset;
-                printf("Jump to line: %d\n", line);
+                // printf("Jump to line: %d\n", line);
             }
             else if (conditional == 0){
                 line++;
@@ -217,7 +217,7 @@ void executeInstructions() {
             clock_cycles += 1;
         }
         else {
-            printf("Not implemented\n");
+            printf("Unknown instruction: %s\n", instruction_copy);
             free(instruction_copy);
             break;
         }
