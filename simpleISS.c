@@ -247,7 +247,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     readInstructions(assembly_code);
-    // printInstructions();
     executeInstructions();
     printResults();
     fclose(assembly_code);
